@@ -82,13 +82,12 @@ func ValidateNewShortcutKey(addCmd *flag.FlagSet, name *string, shortcut *string
 		addCmd.PrintDefaults()
 		os.Exit(1)
 	}
-	return
 }
 
 func HandleAdd(addCmd *flag.FlagSet, name *string, newShortcut *string) {
 	ValidateNewShortcutKey(addCmd, name, newShortcut)
 
-	shortcut := shortcut{
+	shortcut := Shortcut{
 		Name:        *name,
 		ShortcutKey: *newShortcut,
 	}
@@ -102,7 +101,7 @@ func HandleAdd(addCmd *flag.FlagSet, name *string, newShortcut *string) {
 
 func HandleDelete(deleteCmd *flag.FlagSet, all *bool, name *string) {
 	deleteCmd.Parse(os.Args[2:])
-	if *all == false && *name == "" {
+	if !*all && *name == "" {
 		fmt.Println("Specify the target shortcut with all or name flag")
 		deleteCmd.PrintDefaults()
 		os.Exit(1)
