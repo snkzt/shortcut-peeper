@@ -1,4 +1,4 @@
-package main
+package shortcuts
 
 import (
 	"encoding/json"
@@ -12,59 +12,66 @@ type Shortcut struct {
 	ShortcutKey string
 }
 
-func getShortcuts() (shortcuts []Shortcut) {
+func GetShortcuts() ([]Shortcut, error) {
+	var shortcuts []Shortcut
 	// Check if the json file exists and create new one if it doesn't exist
-	_, err := os.Open("./shortcuts.json")
+	_, err := os.Open("$HOME/.config/shortcuts.json")
 	if err != nil {
-		err = os.WriteFile("./shortcuts.json", nil, 0644)
+		err = os.WriteFile("$XDG_CONFIG_HOME/shortcuts.json", nil, 0644)
 		if err != nil {
-			fmt.Println(err)
+			return nil, err
 		}
 	}
 
-	fileBytes, err := os.ReadFile("./shortcuts.json")
+	fileBytes, err := os.ReadFile("$XDG_CONFIG_HOME/shortcuts.json")
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
 
 	// Set the decoded data of fileBytes to shortcuts struct
 	err = json.Unmarshal(fileBytes, &shortcuts)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
 
-	return shortcuts
+	return shortcuts, nil
 }
 
-func saveShortcuts(shortcuts []Shortcut) {
+func SaveShortcuts(shortcuts []Shortcut) error {
 	shortcutBytes, err := json.Marshal(shortcuts)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	// Write the new shortcut into the json file and create one if the file not exists
-	err = os.WriteFile("./shortcuts.json", shortcutBytes, 0644)
+	err = os.WriteFile("$XDG_CONFIG_HOME/shortcuts.json", shortcutBytes, 0644)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
+	return nil
 }
 
-func deleteShortcuts() {
+func DeleteShortcuts() error {
 	// Remove shortcuts.json file
-	err := os.Remove("./shortcuts.json")
+	err := os.Remove("$XDG_CONFIG_HOME/shortcuts.json")
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
+	return nil
 }
 
-func deleteShortcut(name string) {
+func DeleteShortcut(name string) error {
 	// Get existing shortcut key list
-	shortcuts := getShortcuts()
+	shortcuts, err := GetShortcuts()
+	if err != nil {
+		return err
+	}
+
 	for _, shortcut := range shortcuts {
 		var mapStruct map[string]interface{}
 		shortcutByte, _ := json.Marshal(shortcut)
 		if err := json.Unmarshal(shortcutByte, &mapStruct); err != nil {
-			fmt.Println(err)
+			return err
 		}
 		for structName, _ := range mapStruct {
 			if strings.Contains(structName, name) {
@@ -79,5 +86,10 @@ func deleteShortcut(name string) {
 		}
 		fmt.Printf("No \"%v\" exists", name)
 	}
-	saveShortcuts(shortcuts)
+
+	err = SaveShortcuts(shortcuts)
+	if err != nil {
+		return err
+	}
+	return nil
 }

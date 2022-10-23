@@ -1,15 +1,29 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"strings"
+
+	shortcuts "github.com/snkzt/shortcut-peeper"
 )
 
-// TODO: add language flag diversion, unit unit test
+const (
+	exitFail = 1
+)
+
+// TODO: add language flag diversion, unit test
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(exitFail)
+	}
+}
+
+func run() error {
 	// peeper subcommand "get"
 	getCmd := flag.NewFlagSet("get", flag.ExitOnError)
 	// Flags for "get" subcommand
@@ -30,41 +44,48 @@ func main() {
 	deleteByName := deleteCmd.String("name", "", "Delete a shortcut by name")
 
 	if len(os.Args) < 2 {
-		fmt.Println("Exepected either 'get', 'add', 'delete' subcommands")
+		err := errors.New("Exepected either 'get', 'add', 'delete' subcommands")
+		return err
 	}
 
 	switch os.Args[1] {
 	case "get":
-		HandleGet(getCmd, getAll, getByKeyword)
+		return HandleGet(getCmd, getAll, getByKeyword)
 	case "add":
 		HandleAdd(addCmd, addName, addShortcut)
 	case "delete":
-		HandleDelete(deleteCmd, deleteAll, deleteByName)
+		return HandleDelete(deleteCmd, deleteAll, deleteByName)
 		// TODO: Do we need to add default and return error for the case of the command doesn't exist?
 	}
+	return nil
 }
 
-func HandleGet(getCmd *flag.FlagSet, all *bool, keyword *string) {
+func HandleGet(getCmd *flag.FlagSet, all *bool, keyword *string) error {
 	getCmd.Parse(os.Args[2:])
 
-	if *all == false && *keyword == "" {
-		fmt.Println("Specify the target shortcut with all or keyword flag")
+	if !*all && *keyword == "" {
+		err := errors.New("Specify the target shortcut with all or keyword flag")
 		getCmd.PrintDefaults()
-		os.Exit(1)
+		return err
 	}
 
 	if *all {
 		// Return full shortcut list
-		shortcuts := getShortcuts()
+		shortcuts, err := shortcuts.GetShortcuts()
+		if err != nil {
+			return err
+		}
 		fmt.Println("Name \t Shortcut key \n")
 		for _, shortcut := range shortcuts {
 			fmt.Printf("%v \t %v \n", shortcut.Name, shortcut.ShortcutKey)
 		}
-		return
 	}
 
 	if *keyword != "" {
-		shortcuts := getShortcuts()
+		shortcuts, err := shortcuts.GetShortcuts()
+		if err != nil {
+			return err
+		}
 		keyword := *keyword
 		for _, shortcut := range shortcuts {
 			if strings.Contains(shortcut.ShortcutKey, keyword) {
@@ -73,48 +94,63 @@ func HandleGet(getCmd *flag.FlagSet, all *bool, keyword *string) {
 			}
 		}
 	}
+	return nil
 }
 
-func ValidateNewShortcutKey(addCmd *flag.FlagSet, name *string, shortcut *string) {
+func ValidateNewShortcutKey(addCmd *flag.FlagSet, name *string, shortcut *string) error {
 	addCmd.Parse(os.Args[2:])
 	if *name == "" || *shortcut == "" {
-		fmt.Print("Name and the shortcut key are required to add a shortcut key")
+		err := errors.New("Name and the shortcut key are required to add a shortcut key")
 		addCmd.PrintDefaults()
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
 
-func HandleAdd(addCmd *flag.FlagSet, name *string, newShortcut *string) {
+func HandleAdd(addCmd *flag.FlagSet, name *string, newShortcut *string) error {
 	ValidateNewShortcutKey(addCmd, name, newShortcut)
 
-	shortcut := Shortcut{
+	shortcut := shortcuts.Shortcut{
 		Name:        *name,
 		ShortcutKey: *newShortcut,
 	}
 
-	shortcuts := getShortcuts()
-	shortcuts = append(shortcuts, shortcut)
-	saveShortcuts(shortcuts)
-
+	allShortcuts, err := shortcuts.GetShortcuts()
+	if err != nil {
+		return err
+	}
+	allShortcuts = append(allShortcuts, shortcut)
+	err = shortcuts.SaveShortcuts(allShortcuts)
+	if err != nil {
+		return err
+	}
 	fmt.Printf("New shortcut %v successfully added to the Shortcut key list", *name)
+	return nil
 }
 
-func HandleDelete(deleteCmd *flag.FlagSet, all *bool, name *string) {
+func HandleDelete(deleteCmd *flag.FlagSet, all *bool, name *string) error {
 	deleteCmd.Parse(os.Args[2:])
 	if !*all && *name == "" {
-		fmt.Println("Specify the target shortcut with all or name flag")
+		err := errors.New("Specify the target shortcut with all or name flag")
 		deleteCmd.PrintDefaults()
-		os.Exit(1)
+		return err
 	}
 
 	if *all {
 		// Delete full shortcut list
-		deleteShortcuts()
+		err := shortcuts.DeleteShortcuts()
+		if err != nil {
+			return err
+		}
 		fmt.Println("Shortcut list deleted")
 	}
 
 	if *name != "" {
-		deleteShortcut(*name)
+		err := shortcuts.DeleteShortcut(*name)
+		if err != nil {
+			return err
+		}
 		fmt.Printf("Shortcut %v successfully removed from the Shortcut key list", *name)
 	}
+	return nil
 }
