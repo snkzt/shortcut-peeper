@@ -52,7 +52,7 @@ func run() error {
 	case "get":
 		return HandleGet(getCmd, getAll, getByKeyword)
 	case "add":
-		HandleAdd(addCmd, addName, addShortcut)
+		return HandleAdd(addCmd, addName, addShortcut)
 	case "delete":
 		return HandleDelete(deleteCmd, deleteAll, deleteByName)
 		// TODO: Do we need to add default and return error for the case of the command doesn't exist?
