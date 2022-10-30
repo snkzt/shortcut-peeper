@@ -73,6 +73,7 @@ func HandleGet(getCmd *flag.FlagSet, all *bool, keyword *string) error {
 		// Return full shortcut list
 		shortcuts, err := shortcuts.GetShortcuts()
 		if err != nil {
+			err = fmt.Errorf("Failed to acquire the existing list: %w", err)
 			return err
 		}
 		fmt.Println("Name \t Shortcut key \n")
@@ -84,6 +85,7 @@ func HandleGet(getCmd *flag.FlagSet, all *bool, keyword *string) error {
 	if *keyword != "" {
 		shortcuts, err := shortcuts.GetShortcuts()
 		if err != nil {
+			err = fmt.Errorf("Failed to acquire the existing list: %w", err)
 			return err
 		}
 		keyword := *keyword
@@ -117,11 +119,13 @@ func HandleAdd(addCmd *flag.FlagSet, name *string, newShortcut *string) error {
 
 	allShortcuts, err := shortcuts.GetShortcuts()
 	if err != nil {
+		err = fmt.Errorf("Failed to acquire the existing list: %w", err)
 		return err
 	}
 	allShortcuts = append(allShortcuts, shortcut)
 	err = shortcuts.SaveShortcuts(allShortcuts)
 	if err != nil {
+		err = fmt.Errorf("Failed to save the updated list: %w", err)
 		return err
 	}
 	fmt.Printf("New shortcut %v successfully added to the Shortcut key list", *name)
@@ -140,6 +144,7 @@ func HandleDelete(deleteCmd *flag.FlagSet, all *bool, name *string) error {
 		// Delete full shortcut list
 		err := shortcuts.DeleteShortcuts()
 		if err != nil {
+			err = fmt.Errorf("Failed to delete the shortcut list: %w", err)
 			return err
 		}
 		fmt.Println("Shortcut list deleted")
@@ -148,6 +153,7 @@ func HandleDelete(deleteCmd *flag.FlagSet, all *bool, name *string) error {
 	if *name != "" {
 		err := shortcuts.DeleteShortcut(*name)
 		if err != nil {
+			err = fmt.Errorf("Failed to remove an item from the list: %w", err)
 			return err
 		}
 		fmt.Printf("Shortcut %v successfully removed from the Shortcut key list", *name)
