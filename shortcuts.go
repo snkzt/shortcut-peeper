@@ -15,15 +15,15 @@ type Shortcut struct {
 func GetShortcuts() ([]Shortcut, error) {
 	var shortcuts []Shortcut
 	// Check if the json file exists and create new one if it doesn't exist
-	_, err := os.Open("$HOME/.config/shortcuts.json")
+	_, err := os.Open("$XDG_CONFIG_HOME/shortcuts.json")
 	if err != nil {
-		err = os.WriteFile("$HOME/.config/shortcuts.json", nil, 0644)
+		err = os.WriteFile("$XDG_CONFIG_HOME/shortcuts.json", nil, 0644)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	fileBytes, err := os.ReadFile("$HOME/.config/shortcuts.json")
+	fileBytes, err := os.ReadFile("$XDG_CONFIG_HOME/shortcuts.json")
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func SaveShortcuts(shortcuts []Shortcut) error {
 	}
 
 	// Write the new shortcut into the json file and create one if the file not exists
-	err = os.WriteFile("$HOME/.config/shortcuts.json", shortcutBytes, 0644)
+	err = os.WriteFile("$XDG_CONFIG_HOME/shortcuts.json", shortcutBytes, 0644)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func SaveShortcuts(shortcuts []Shortcut) error {
 
 func DeleteShortcuts() error {
 	// Remove shortcuts.json file
-	err := os.Remove("$HOME/.config/shortcuts.json")
+	err := os.Remove("$XDG_CONFIG_HOME/shortcuts.json")
 	if err != nil {
 		return err
 	}
