@@ -17,13 +17,13 @@ func GetShortcuts() ([]Shortcut, error) {
 	// Check if the json file exists and create new one if it doesn't exist
 	_, err := os.Open("./shortcuts.json")
 	if err != nil {
-		err = os.WriteFile("$./shortcuts.json", nil, 0644)
+		err = os.WriteFile("./shortcuts.json", nil, 0644)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	fileBytes, err := os.ReadFile("$./shortcuts.json")
+	fileBytes, err := os.ReadFile("./shortcuts.json")
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func SaveShortcuts(shortcuts []Shortcut) error {
 
 func DeleteShortcuts() error {
 	// Remove shortcuts.json file
-	err := os.Remove("$./shortcuts.json")
+	err := os.Remove("./shortcuts.json")
 	if err != nil {
 		return err
 	}
