@@ -118,10 +118,11 @@ func HandleAdd(addCmd *flag.FlagSet, name *string, newShortcut *string) error {
 	}
 	allShortcuts = append(allShortcuts, shortcut)
 	err = shortcuts.SaveShortcuts(allShortcuts)
+
 	if err != nil {
 		return fmt.Errorf("failed to save the updated list: %w", err)
 	}
-	fmt.Printf("New shortcut %v successfully added to the Shortcut key list", *name)
+	fmt.Printf("New shortcut \"%v\" successfully added to the list", *name)
 	return nil
 }
 
