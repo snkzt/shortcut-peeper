@@ -71,7 +71,7 @@ func HandleGet(getCmd *flag.FlagSet, all *bool, keyword *string) error {
 		// Return full shortcut list
 		shortcuts, err := shortcuts.GetShortcuts()
 		if err != nil {
-			return fmt.Errorf("failed to acquire the existing list: %w", err)
+			return fmt.Errorf("please add new shortcuts, no shortcut key registered: %w", err)
 		}
 		fmt.Println("Name \t Shortcut key \n")
 		for _, shortcut := range shortcuts {
@@ -87,7 +87,7 @@ func HandleGet(getCmd *flag.FlagSet, all *bool, keyword *string) error {
 		keyword := *keyword
 		for _, shortcut := range shortcuts {
 			if strings.Contains(shortcut.ShortcutKey, keyword) {
-				fmt.Println("Name \t Shortcut key \n")
+				fmt.Println("Name \t Shortcut key")
 				fmt.Printf("%v \t %v \n", shortcut.Name, shortcut.ShortcutKey)
 			}
 		}
@@ -107,22 +107,20 @@ func ValidateNewShortcutKey(addCmd *flag.FlagSet, name *string, shortcut *string
 func HandleAdd(addCmd *flag.FlagSet, name *string, newShortcut *string) error {
 	ValidateNewShortcutKey(addCmd, name, newShortcut)
 
+	var allShortcuts []shortcuts.Shortcut
 	shortcut := shortcuts.Shortcut{
 		Name:        *name,
 		ShortcutKey: *newShortcut,
 	}
 
-	allShortcuts, err := shortcuts.GetShortcuts()
-	if err != nil {
-		return fmt.Errorf("failed to acquire the existing list: %w", err)
-	}
+	allShortcuts, _ = shortcuts.GetShortcuts()
 	allShortcuts = append(allShortcuts, shortcut)
-	err = shortcuts.SaveShortcuts(allShortcuts)
-
+	err := shortcuts.SaveShortcuts(allShortcuts)
 	if err != nil {
 		return fmt.Errorf("failed to save the updated list: %w", err)
 	}
-	fmt.Printf("New shortcut \"%v\" successfully added to the list", *name)
+
+	fmt.Printf("New shortcut \"%v\" successfully registered", *name)
 	return nil
 }
 
