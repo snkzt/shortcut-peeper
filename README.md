@@ -19,7 +19,10 @@ Nothing complicated, super simple app that support your computer life.
     ```
     // To retrieve all the shortcuts registered
     speep get -all
-
+     
+    // To add a new shortcut (both name and shortcut in string)
+    speep add -name Copy -shortcut Ctrl+C
+    
     // To know what flags are available for the command
     speep get
     // Result
