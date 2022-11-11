@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 )
 
 type Shortcut struct {
@@ -13,7 +12,7 @@ type Shortcut struct {
 }
 
 func createDirectory(fileStoragePath string) (string, error) {
-	fileStoragePath += "/speep"
+	fileStoragePath += "/.config/speep"
 
 	if _, err := os.Stat(fileStoragePath); os.IsNotExist(err) {
 		if err = os.Mkdir(fileStoragePath, 0750); err != nil {
@@ -27,7 +26,6 @@ func createDirectory(fileStoragePath string) (string, error) {
 
 func getEnvPath() (string, error) {
 	fileStoragePath := os.Getenv("XDG_CONFIG_HOME")
-
 	if fileStoragePath == "" {
 		fileStoragePath = os.Getenv("HOME")
 	}
@@ -43,11 +41,13 @@ func getEnvPath() (string, error) {
 
 func GetShortcuts() ([]Shortcut, error) {
 	var shortcuts []Shortcut
+
 	// Check if the json file exists and create new one if it doesn't exist
 	fileStoragePath, err := getEnvPath()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve shortcut list: %w", err)
 	}
+
 	_, err = os.Open(fileStoragePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open shortcut list: %w", err)
@@ -63,7 +63,6 @@ func GetShortcuts() ([]Shortcut, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to store byte data to shortcuts struct: %w", err)
 	}
-
 	return shortcuts, nil
 }
 
@@ -78,12 +77,12 @@ func SaveShortcuts(shortcuts []Shortcut) error {
 		return fmt.Errorf("failed to save shortcut list: %w", err)
 	}
 
-	// Write the new shortcut into the json file and create one if the file not exists
+	// Write the new shortcut into the existing list
+	// and create one if no list exists
 	err = os.WriteFile(fileStoragePath, shortcutBytes, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to save the new shortcut: %w", err)
 	}
-
 	return nil
 }
 
@@ -93,6 +92,7 @@ func DeleteShortcuts() error {
 	if err != nil {
 		return fmt.Errorf("failed to delete shortcut list: %w", err)
 	}
+
 	err = os.Remove(fileStoragePath)
 	if err != nil {
 		return fmt.Errorf("failed to delete the existing list: %w", err)
@@ -107,30 +107,26 @@ func DeleteShortcut(name string) error {
 		return fmt.Errorf("failed to acquire existing list: %w", err)
 	}
 
-	for _, shortcut := range shortcuts {
-		// Convert shortcuts struct into map to delete a specific item
-		var mapStruct map[string]interface{}
-		shortcutByte, _ := json.Marshal(shortcut)
-		if err := json.Unmarshal(shortcutByte, &mapStruct); err != nil {
-			return fmt.Errorf("failed to convert shortcuts struct into map: %w", err)
-		}
-		for structName, _ := range mapStruct {
-			if strings.Contains(structName, name) {
-				delete(mapStruct, name)
-			}
-			fmt.Printf("%v successfully removed", name)
-		}
-
-		shortcutStruct, _ := json.Marshal(mapStruct)
-		if err := json.Unmarshal(shortcutStruct, &shortcuts); err != nil { // will this be append to existing structs[]?
-			fmt.Println(err)
-		}
-		fmt.Printf("No \"%v\" exists", name)
+	// Convert shortcuts []Shortcut into map to range
+	// to take out each one of the items
+	// var structs []Shortcut
+	shortcutsByte, _ := json.Marshal(shortcuts)
+	if err := json.Unmarshal(shortcutsByte, &shortcuts); err != nil {
+		return fmt.Errorf("failed to convert shortcuts struct into map: %w", err)
 	}
-
-	err = SaveShortcuts(shortcuts)
-	if err != nil {
-		return fmt.Errorf("failed to save the list after removing an item: %w", err)
+	for i, shortcut := range shortcuts {
+		if shortcut.Name == name {
+			if (len(shortcuts) - 1) <= 0 {
+				shortcuts = nil
+			} else {
+				shortcuts[i] = shortcuts[len(shortcuts)-1]
+				shortcuts = shortcuts[:len(shortcuts)-1]
+			}
+		}
+		err = SaveShortcuts(shortcuts)
+		if err != nil {
+			return fmt.Errorf("failed to save the list after removing an item: %w", err)
+		}
 	}
 	return nil
 }
