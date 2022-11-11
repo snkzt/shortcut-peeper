@@ -31,7 +31,7 @@ Nothing complicated, super simple app that support your computer life.
     ```
 
 ## Inquiry
-Raise as issue on github for any inquiries.
+Raise an issue on github for any inquiries.
 
 ## Contributor
 Special thanks to @kinbiko!
