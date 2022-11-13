@@ -29,42 +29,44 @@ func run() error {
 	// Flags for "get" subcommand
 	// ("flag name", default, "Flag explanation")
 	getAll := getCmd.Bool("all", false, "Get full shortcut list")
-	getByKeyword := getCmd.String("keyword", "", "Find a shortcut with keyword ")
+	getByName := getCmd.String("name", "", "Find a shortcut with a name e.g. \"speep get -name Copy\" ")
 
 	// peeper subcommand "add"
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	// Flags(inputs) for "add" subcommand
-	addName := addCmd.String("name", "", "Name of the shortcut")
-	addShortcut := addCmd.String("shortcut", "", "Shortcut")
+	addName := addCmd.String("name", "", "Name of the shortcut: Use \"\" for more than one word e.g. -name \"to the back of the line\"")
+	addKey := addCmd.String("key", "", "Key of the shortcut key\n e.g. \"speep add -name copy -shortcut Ctrl+C\"")
 
 	// peeper subcommand "delete"
 	deleteCmd := flag.NewFlagSet("delete", flag.ExitOnError)
 	// Flags for "delete" subcommand
-	deleteAll := deleteCmd.Bool("all", false, "Delete whole shortcut list")
-	deleteByName := deleteCmd.String("name", "", "Delete a shortcut by name")
+	deleteAll := deleteCmd.Bool("all", false, "Delete whole shortcut list with \"speep delete -all\"")
+	deleteByName := deleteCmd.String("name", "", "Delete a shortcut by name e.g. \"speep delete -name Copy\"")
 
 	if len(os.Args) < 2 {
-		return errors.New("exepected either 'get', 'add', 'delete' subcommands")
+		return errors.New("Please check how to use the app by typing either \"speep get\", \"speep add\" or \"speep delete\" for more details.")
 	}
 
 	switch os.Args[1] {
 	case "get":
-		return HandleGet(getCmd, getAll, getByKeyword)
+		return HandleGet(getCmd, getAll, getByName)
 	case "add":
-		return HandleAdd(addCmd, addName, addShortcut)
+		return HandleAdd(addCmd, addName, addKey)
 	case "delete":
 		return HandleDelete(deleteCmd, deleteAll, deleteByName)
-		// TODO: Do we need to add default and return error for the case of the command doesn't exist?
+	default: // When user chose command which doesn't exist
+		fmt.Println("Please check how to use the app by typing either \"speep get\", \"speep add\" or \"speep delete\" for more details.")
+
 	}
 	return nil
 }
 
-func HandleGet(getCmd *flag.FlagSet, all *bool, keyword *string) error {
+func HandleGet(getCmd *flag.FlagSet, all *bool, name *string) error {
 	getCmd.Parse(os.Args[2:])
 
-	if !*all && *keyword == "" {
+	if !*all && *name == "" {
 		getCmd.PrintDefaults()
-		return errors.New("specify the target shortcut with all or keyword flag")
+		return nil
 	}
 
 	if *all {
@@ -79,14 +81,14 @@ func HandleGet(getCmd *flag.FlagSet, all *bool, keyword *string) error {
 		}
 	}
 
-	if *keyword != "" {
+	if *name != "" {
 		shortcuts, err := shortcuts.GetShortcuts()
 		if err != nil {
 			return fmt.Errorf("failed to acquire the existing list: %w", err)
 		}
-		keyword := *keyword
+		name := *name
 		for _, shortcut := range shortcuts {
-			if strings.Contains(shortcut.ShortcutKey, keyword) {
+			if strings.Contains(shortcut.ShortcutKey, name) {
 				fmt.Println("Name \t Shortcut key")
 				fmt.Printf("%v \t %v \n", shortcut.Name, shortcut.ShortcutKey)
 			}
@@ -95,9 +97,9 @@ func HandleGet(getCmd *flag.FlagSet, all *bool, keyword *string) error {
 	return nil
 }
 
-func ValidateNewShortcutKey(addCmd *flag.FlagSet, name *string, shortcut *string) error {
+func ValidateNewShortcutKey(addCmd *flag.FlagSet, name *string, key *string) error {
 	addCmd.Parse(os.Args[2:])
-	if *name == "" || *shortcut == "" {
+	if *name == "" || *key == "" {
 		addCmd.PrintDefaults()
 		return errors.New("name and the shortcut key are required to add a shortcut key")
 	}
@@ -105,7 +107,10 @@ func ValidateNewShortcutKey(addCmd *flag.FlagSet, name *string, shortcut *string
 }
 
 func HandleAdd(addCmd *flag.FlagSet, name *string, newShortcut *string) error {
-	ValidateNewShortcutKey(addCmd, name, newShortcut)
+	err := ValidateNewShortcutKey(addCmd, name, newShortcut)
+	if err != nil {
+		return nil
+	}
 
 	var allShortcuts []shortcuts.Shortcut
 	shortcut := shortcuts.Shortcut{
@@ -113,9 +118,14 @@ func HandleAdd(addCmd *flag.FlagSet, name *string, newShortcut *string) error {
 		ShortcutKey: *newShortcut,
 	}
 
+	err = shortcuts.CheckNameDuplication(name)
+	if err != nil {
+		return fmt.Errorf("the name \"%s\" %w", *name, err)
+	}
+
 	allShortcuts, _ = shortcuts.GetShortcuts()
 	allShortcuts = append(allShortcuts, shortcut)
-	err := shortcuts.SaveShortcuts(allShortcuts)
+	err = shortcuts.SaveShortcuts(allShortcuts)
 	if err != nil {
 		return fmt.Errorf("failed to save the updated list: %w", err)
 	}
@@ -128,7 +138,7 @@ func HandleDelete(deleteCmd *flag.FlagSet, all *bool, name *string) error {
 	deleteCmd.Parse(os.Args[2:])
 	if !*all && *name == "" {
 		deleteCmd.PrintDefaults()
-		return errors.New("specify the target shortcut with all or name flag")
+		return nil
 	}
 
 	if *all {
@@ -146,6 +156,7 @@ func HandleDelete(deleteCmd *flag.FlagSet, all *bool, name *string) error {
 			return fmt.Errorf("failed to remove an item from the list: %w", err)
 		}
 		fmt.Printf("Shortcut %v successfully removed from the Shortcut key list", *name)
+		// Add return error of the target not exist if the name doesn't exist in the list
 	}
 	return nil
 }

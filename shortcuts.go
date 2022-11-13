@@ -2,6 +2,7 @@ package shortcuts
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -66,6 +67,18 @@ func GetShortcuts() ([]Shortcut, error) {
 	return shortcuts, nil
 }
 
+func CheckNameDuplication(name *string) error {
+	shortcutList, _ := GetShortcuts()
+	for _, shortcut := range shortcutList {
+		if shortcut.Name == *name {
+			// TODO: Distinguish capital or not: same for other commands
+			// TODO: Change the logic to check the language name first to make it shortcut name to be unique per language
+			return errors.New("already registered")
+		}
+	}
+	return nil
+}
+
 func SaveShortcuts(shortcuts []Shortcut) error {
 	shortcutBytes, err := json.Marshal(shortcuts)
 	if err != nil {
@@ -128,5 +141,6 @@ func DeleteShortcut(name string) error {
 			return fmt.Errorf("failed to save the list after removing an item: %w", err)
 		}
 	}
+	// Add when there's no matching name
 	return nil
 }
