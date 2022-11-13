@@ -13,16 +13,28 @@ type Shortcut struct {
 }
 
 func createDirectory(fileStoragePath string) (string, error) {
-	fileStoragePath += "/.config/speep"
+	speepDir := fileStoragePath + "/speep"
+	_, err := os.Stat(fileStoragePath)
+	_, errS := os.Stat(speepDir)
 
-	if _, err := os.Stat(fileStoragePath); os.IsNotExist(err) {
-		if err = os.Mkdir(fileStoragePath, 0750); err != nil {
-			return "", fmt.Errorf("failed to create directory \"speep\": %w", err)
+	switch {
+	//case !strings.Contains(fileStoragePath, "/.config"):
+	case os.IsNotExist(err):
+		err = os.Mkdir(fileStoragePath, 0750)
+		if err != nil {
+			return "", fmt.Errorf("failed to create directory \".config\": %w", err)
 		}
-		return fileStoragePath, nil
+		fallthrough
+	case os.IsNotExist(errS):
+		err = os.Mkdir(speepDir, 0750)
+		if err != nil {
+			return "", fmt.Errorf("failed to create directory \".config/speep\": %w", err)
+		}
+		return speepDir, nil
+	default:
+		fmt.Println(fileStoragePath)
+		return speepDir, nil
 	}
-
-	return fileStoragePath, nil
 }
 
 func getEnvPath() (string, error) {
@@ -31,6 +43,7 @@ func getEnvPath() (string, error) {
 		fileStoragePath = os.Getenv("HOME")
 	}
 
+	fileStoragePath += "/.config"
 	fileStoragePath, err := createDirectory(fileStoragePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve env path: %w", err)
@@ -68,6 +81,7 @@ func GetShortcuts() ([]Shortcut, error) {
 }
 
 func CheckNameDuplication(name *string) error {
+
 	shortcutList, _ := GetShortcuts()
 	for _, shortcut := range shortcutList {
 		if shortcut.Name == *name {
