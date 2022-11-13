@@ -2,6 +2,7 @@ package shortcuts
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -12,16 +13,28 @@ type Shortcut struct {
 }
 
 func createDirectory(fileStoragePath string) (string, error) {
-	fileStoragePath += "/.config/speep"
+	speepDir := fileStoragePath + "/speep"
+	_, err := os.Stat(fileStoragePath)
+	_, errS := os.Stat(speepDir)
 
-	if _, err := os.Stat(fileStoragePath); os.IsNotExist(err) {
-		if err = os.Mkdir(fileStoragePath, 0750); err != nil {
-			return "", fmt.Errorf("failed to create directory \"speep\": %w", err)
+	switch {
+	//case !strings.Contains(fileStoragePath, "/.config"):
+	case os.IsNotExist(err):
+		err = os.Mkdir(fileStoragePath, 0750)
+		if err != nil {
+			return "", fmt.Errorf("failed to create directory \".config\": %w", err)
 		}
-		return fileStoragePath, nil
+		fallthrough
+	case os.IsNotExist(errS):
+		err = os.Mkdir(speepDir, 0750)
+		if err != nil {
+			return "", fmt.Errorf("failed to create directory \".config/speep\": %w", err)
+		}
+		return speepDir, nil
+	default:
+		fmt.Println(fileStoragePath)
+		return speepDir, nil
 	}
-
-	return fileStoragePath, nil
 }
 
 func getEnvPath() (string, error) {
@@ -30,6 +43,7 @@ func getEnvPath() (string, error) {
 		fileStoragePath = os.Getenv("HOME")
 	}
 
+	fileStoragePath += "/.config"
 	fileStoragePath, err := createDirectory(fileStoragePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve env path: %w", err)
@@ -64,6 +78,19 @@ func GetShortcuts() ([]Shortcut, error) {
 		return nil, fmt.Errorf("failed to store byte data to shortcuts struct: %w", err)
 	}
 	return shortcuts, nil
+}
+
+func CheckNameDuplication(name *string) error {
+
+	shortcutList, _ := GetShortcuts()
+	for _, shortcut := range shortcutList {
+		if shortcut.Name == *name {
+			// TODO: Distinguish capital or not: same for other commands
+			// TODO: Change the logic to check the language name first to make it shortcut name to be unique per language
+			return errors.New("already registered")
+		}
+	}
+	return nil
 }
 
 func SaveShortcuts(shortcuts []Shortcut) error {
@@ -128,5 +155,6 @@ func DeleteShortcut(name string) error {
 			return fmt.Errorf("failed to save the list after removing an item: %w", err)
 		}
 	}
+	// Add when there's no matching name
 	return nil
 }
