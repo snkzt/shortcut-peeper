@@ -32,7 +32,6 @@ func createDirectory(fileStoragePath string) (string, error) {
 		}
 		return speepDir, nil
 	default:
-		fmt.Println(fileStoragePath)
 		return speepDir, nil
 	}
 }
