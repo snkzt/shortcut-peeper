@@ -8,6 +8,7 @@ import (
 )
 
 type Shortcut struct {
+	Category    string
 	Name        string
 	ShortcutKey string
 }
@@ -79,14 +80,14 @@ func GetShortcuts() ([]Shortcut, error) {
 	return shortcuts, nil
 }
 
-func CheckNameDuplication(name *string) error {
+func CheckNameDuplication(category *string, name *string) error {
 
 	shortcutList, _ := GetShortcuts()
 	for _, shortcut := range shortcutList {
-		if shortcut.Name == *name {
-			// TODO: Distinguish capital or not: same for other commands
-			// TODO: Change the logic to check the language name first to make it shortcut name to be unique per language
-			return errors.New("already registered")
+		if shortcut.Category == *category {
+			if shortcut.Name == *name {
+				return errors.New("already registered")
+			}
 		}
 	}
 	return nil
@@ -126,7 +127,7 @@ func DeleteShortcuts() error {
 	return nil
 }
 
-func DeleteShortcut(name string) error {
+func DeleteShortcut(category string, name string) error {
 	// Get existing shortcut key list
 	shortcuts, err := GetShortcuts()
 	if err != nil {
@@ -135,18 +136,21 @@ func DeleteShortcut(name string) error {
 
 	// Convert shortcuts []Shortcut into map to range
 	// to take out each one of the items
-	// var structs []Shortcut
 	shortcutsByte, _ := json.Marshal(shortcuts)
 	if err := json.Unmarshal(shortcutsByte, &shortcuts); err != nil {
 		return fmt.Errorf("failed to convert shortcuts struct into map: %w", err)
 	}
 	for i, shortcut := range shortcuts {
-		if shortcut.Name == name {
-			if (len(shortcuts) - 1) <= 0 {
-				shortcuts = nil
+		if shortcut.Category == category {
+			if shortcut.Name == name {
+				if (len(shortcuts) - 1) <= 0 {
+					shortcuts = nil
+				} else {
+					shortcuts[i] = shortcuts[len(shortcuts)-1]
+					shortcuts = shortcuts[:len(shortcuts)-1]
+				}
 			} else {
-				shortcuts[i] = shortcuts[len(shortcuts)-1]
-				shortcuts = shortcuts[:len(shortcuts)-1]
+				return fmt.Errorf("the shortcut name %s for the category %s does not exist", name, category)
 			}
 		}
 		err = SaveShortcuts(shortcuts)
