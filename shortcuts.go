@@ -134,14 +134,6 @@ func DeleteShortcut(category string, name string) error {
 		return fmt.Errorf("failed to acquire existing list: %w", err)
 	}
 
-	// // Convert shortcuts []Shortcut into map to range
-	// // to take out each one of the items
-	// shortcutsByte, _ := json.Marshal(shortcuts)
-	// fmt.Printf("shortcutsByte: %T\n", shortcutsByte)
-	// if err := json.Unmarshal(shortcutsByte, &shortcuts); err != nil {
-	// 	return fmt.Errorf("failed to convert shortcuts struct into map: %w", err)
-	// }
-
 	for i, shortcut := range shortcuts {
 		if shortcut.Category == category {
 			if shortcut.Name == name {
