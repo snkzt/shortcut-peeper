@@ -134,30 +134,27 @@ func DeleteShortcut(category string, name string) error {
 		return fmt.Errorf("failed to acquire existing list: %w", err)
 	}
 
-	// Convert shortcuts []Shortcut into map to range
-	// to take out each one of the items
-	shortcutsByte, _ := json.Marshal(shortcuts)
-	if err := json.Unmarshal(shortcutsByte, &shortcuts); err != nil {
-		return fmt.Errorf("failed to convert shortcuts struct into map: %w", err)
-	}
 	for i, shortcut := range shortcuts {
 		if shortcut.Category == category {
 			if shortcut.Name == name {
 				if (len(shortcuts) - 1) <= 0 {
 					shortcuts = nil
+					err = SaveShortcuts(shortcuts)
+					if err != nil {
+						return fmt.Errorf("failed to save the list after removing an item: %w", err)
+					}
+					return nil
 				} else {
 					shortcuts[i] = shortcuts[len(shortcuts)-1]
 					shortcuts = shortcuts[:len(shortcuts)-1]
+					err = SaveShortcuts(shortcuts)
+					if err != nil {
+						return fmt.Errorf("failed to save the list after removing an item: %w", err)
+					}
+					return nil
 				}
-			} else {
-				return fmt.Errorf("the shortcut name %s for the category %s does not exist", name, category)
 			}
 		}
-		err = SaveShortcuts(shortcuts)
-		if err != nil {
-			return fmt.Errorf("failed to save the list after removing an item: %w", err)
-		}
 	}
-	// Add when there's no matching name
-	return nil
+	return fmt.Errorf("the shortcut name %s for the category %s does not exist", name, category)
 }
