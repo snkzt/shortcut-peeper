@@ -78,32 +78,52 @@ func run() error {
 	switch {
 	case command == "get":
 		getCmd.Parse(os.Args[2:])
+		getCmd := *getCmd
+		getAll := *getAll
+		getAllShort := *getAllShort
+		getByName := *getByName
+		getByNameShort := *getByNameShort
 
-		if *getByName == "" && *getByNameShort != "" {
-			*getByName = *getByNameShort
+		if getByName == "" && getByNameShort != "" {
+			getByName = getByNameShort
 		}
 
 		return handleGet(getCmd, getAll, getAllShort, getByName)
 	case command == "add":
 		addCmd.Parse(os.Args[2:])
+		addCmd := *addCmd
+		addCategory := *addCategory
+		addCategoryShort := *addCategoryShort
+		addName := *addName
+		addNameShort := *addNameShort
+		addKey := *addKey
+		addKeyShort := *addKeyShort
 
-		if *addCategory == "" {
-			*addCategory = *addCategoryShort
+		if addCategory == "" {
+			addCategory = addCategoryShort
 		}
-		if *addName == "" {
-			*addName = *addNameShort
+		if addName == "" {
+			addName = addNameShort
 		}
-		if *addKey == "" {
-			*addKey = *addKeyShort
+		if addKey == "" {
+			addKey = addKeyShort
 		}
 		return handleAdd(addCmd, addCategory, addName, addKey)
 	case command == "delete":
 		deleteCmd.Parse(os.Args[2:])
-		if *deleteCategory == "" {
-			*deleteCategory = *deleteCategoryShort
+		deleteCmd := *deleteCmd
+		deleteAll := *deleteAll
+		deleteAllShort := *deleteAllShort
+		deleteCategory := *deleteCategory
+		deleteCategoryShort := *deleteCategoryShort
+		deleteByName := *deleteByName
+		deleteByNameShort := *deleteByNameShort
+
+		if deleteCategory == "" {
+			deleteCategory = deleteCategoryShort
 		}
-		if *deleteByName == "" {
-			*deleteByName = *deleteByNameShort
+		if deleteByName == "" {
+			deleteByName = deleteByNameShort
 		}
 		return handleDelete(deleteCmd, deleteAll, deleteAllShort, deleteCategory, deleteByName)
 	case command == "help" || command == "--help" || command == "-h":
@@ -113,15 +133,15 @@ func run() error {
 	}
 }
 
-func handleGet(getCmd *flag.FlagSet, all *bool, allShort *bool, name *string) error {
+func handleGet(getCmd flag.FlagSet, all bool, allShort bool, name string) error {
 
-	if !*all && !*allShort && *name == "" {
+	if !all && !allShort && name == "" {
 		fmt.Println("Flag and/or argument for the command get is missing.")
 		fmt.Print(handleHelp(usage))
 		return nil
 	}
 
-	if *all || *allShort {
+	if all || allShort {
 		// Return full shortcut list
 		shortcuts, err := shortcuts.GetShortcuts()
 		if err != nil {
@@ -133,12 +153,12 @@ func handleGet(getCmd *flag.FlagSet, all *bool, allShort *bool, name *string) er
 		}
 	}
 
-	if *name != "" {
+	if name != "" {
 		shortcuts, err := shortcuts.GetShortcuts()
 		if err != nil {
 			return fmt.Errorf("failed to acquire the existing list: %w", err)
 		}
-		name := *name
+		name := name
 		fmt.Println("Category  Name  Shortcut key")
 		for _, shortcut := range shortcuts {
 			if strings.Contains(shortcut.Category, shortcut.Category) {
@@ -151,14 +171,14 @@ func handleGet(getCmd *flag.FlagSet, all *bool, allShort *bool, name *string) er
 	return nil
 }
 
-func ValidateNewShortcutKey(category *string, name *string, key *string) error {
-	if *category == "" || *name == "" || *key == "" {
+func ValidateNewShortcutKey(category string, name string, key string) error {
+	if category == "" || name == "" || key == "" {
 		return errors.New(`category, name and shortcut key are required to register new shortcut key. Check "speep help" for the usage.`)
 	}
 	return nil
 }
 
-func handleAdd(addCmd *flag.FlagSet, category *string, name *string, newShortcut *string) error {
+func handleAdd(addCmd flag.FlagSet, category string, name string, newShortcut string) error {
 
 	err := ValidateNewShortcutKey(category, name, newShortcut)
 	if err != nil {
@@ -167,14 +187,14 @@ func handleAdd(addCmd *flag.FlagSet, category *string, name *string, newShortcut
 
 	var allShortcuts []shortcuts.Shortcut
 	shortcut := shortcuts.Shortcut{
-		Category:    *category,
-		Name:        *name,
-		ShortcutKey: *newShortcut,
+		Category:    category,
+		Name:        name,
+		ShortcutKey: newShortcut,
 	}
 
 	err = shortcuts.CheckNameDuplication(category, name)
 	if err != nil {
-		return fmt.Errorf(`the name "%v" for %v %w`, *name, *category, err)
+		return fmt.Errorf(`the name "%v" for %v %w`, name, category, err)
 	}
 
 	allShortcuts, _ = shortcuts.GetShortcuts()
@@ -184,23 +204,23 @@ func handleAdd(addCmd *flag.FlagSet, category *string, name *string, newShortcut
 		return fmt.Errorf("failed to save the updated list: %w", err)
 	}
 
-	fmt.Printf(`New shortcut "%v" for %v successfully registered`, *name, *category)
+	fmt.Printf(`New shortcut "%v" for %v successfully registered`, name, category)
 	return nil
 }
 
-func handleDelete(deleteCmd *flag.FlagSet, all *bool, allShort *bool, category *string, name *string) error {
+func handleDelete(deleteCmd flag.FlagSet, all bool, allShort bool, category string, name string) error {
 
-	if !*all && !*allShort {
-		if *category == "" && *name == "" {
+	if !all && !allShort {
+		if category == "" && name == "" {
 			return errors.New("category and name are required to delete a shortcut key")
-		} else if *category == "" || *name == "" {
+		} else if category == "" || name == "" {
 			fmt.Println("Flag and/or argument for the command delete missing")
 			fmt.Print(handleHelp(usage))
 			return nil
 		}
 	}
 
-	if *all || *allShort {
+	if all || allShort {
 		// Delete full shortcut list
 		err := shortcuts.DeleteShortcuts()
 		if err != nil {
@@ -209,12 +229,12 @@ func handleDelete(deleteCmd *flag.FlagSet, all *bool, allShort *bool, category *
 		fmt.Println("Shortcut list deleted")
 	}
 
-	if *category != "" && *name != "" {
-		err := shortcuts.DeleteShortcut(*category, *name)
+	if category != "" && name != "" {
+		err := shortcuts.DeleteShortcut(category, name)
 		if err != nil {
 			return fmt.Errorf("failed to remove an item from the list: %w", err)
 		}
-		fmt.Printf("Shortcut %v for %v successfully removed from the Shortcut key list", *name, *category)
+		fmt.Printf("Shortcut %v for %v successfully removed from the Shortcut key list", name, category)
 		// Add return error of the target not exist if the name doesn't exist in the list
 	}
 
