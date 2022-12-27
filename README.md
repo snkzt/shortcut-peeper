@@ -13,28 +13,27 @@ Nothing complicated, super simple app that support your computer life.
 
 #### Usage
 1. Open your terminal.
-2. Type `speep + $COMMAND` for your purpose.
+2. Type `speep <command> <flag1> ... <flag2> ...` for your purpose.
     - There are 3 types of commands (`get`, `add` and `delete`)
-    - There will be a guide for flags by just typing commands
+    - There will be a guide. Type ```speep help```
     ```
-    // To retrieve all the shortcuts registered
-    speep get -all
-     
-    // To add a new shortcut (both name and shortcut in string)
-    speep add -name Copy -shortcut Ctrl+C
-    
-    // To know what flags are available for the command
-    speep get
-    // Result
-     -all
-        Get full shortcut list
-     -keyword string
-        Find a shortcut with keyword 
-        specify the target shortcut with all or keyword flag
+   $ speep help
+    Usage of speep: speep <command> <flag1> ... <flag2> ...
+
+    Command Options:
+		get [--all] | [--name <name>]
+		add --category <category> --name <name> --key <key>
+		delete [--all] | [--category <category> --name <name>]
+
+	Flag Options:
+		-a, --all retrieve all shortcuts
+		-c, --category name of the category of the registered shortcut key: e.g. shell
+		-n, --name name of the registered shortcut key: Use "" for more than one word e.g. -name "to the back of the line"
+		-k, --key registered shortcut key
     ```
 
 ## Inquiry
 Raise an issue on github for any inquiries.
 
 ## Contributor
-Special thanks to @kinbiko!
+Special thanks to @kinbiko for the contribution!
