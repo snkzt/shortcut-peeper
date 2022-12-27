@@ -80,12 +80,12 @@ func GetShortcuts() ([]Shortcut, error) {
 	return shortcuts, nil
 }
 
-func CheckNameDuplication(category *string, name *string) error {
+func CheckNameDuplication(category string, name string) error {
 
 	shortcutList, _ := GetShortcuts()
 	for _, shortcut := range shortcutList {
-		if shortcut.Category == *category {
-			if shortcut.Name == *name {
+		if shortcut.Category == category {
+			if shortcut.Name == name {
 				return errors.New("already registered")
 			}
 		}
