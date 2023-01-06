@@ -145,7 +145,7 @@ func handleGet(getCmd flag.FlagSet, all bool, allShort bool, name string) error 
 		// Return full shortcut list
 		shortcuts, err := shortcuts.GetShortcuts()
 		if err != nil {
-			return fmt.Errorf("please add new shortcuts, no shortcut key registered: %w", err)
+			return fmt.Errorf(`please add new shortcuts, no shortcut key registered`)
 		}
 		fmt.Println("Category  Name  Shortcut key\n")
 		for _, shortcut := range shortcuts {
@@ -156,7 +156,7 @@ func handleGet(getCmd flag.FlagSet, all bool, allShort bool, name string) error 
 	if name != "" {
 		shortcuts, err := shortcuts.GetShortcuts()
 		if err != nil {
-			return fmt.Errorf("failed to acquire the existing list: %w", err)
+			return fmt.Errorf(`failed to acquire the existing list`)
 		}
 		name := name
 		fmt.Println("Category  Name  Shortcut key")
@@ -173,7 +173,7 @@ func handleGet(getCmd flag.FlagSet, all bool, allShort bool, name string) error 
 
 func ValidateNewShortcutKey(category string, name string, key string) error {
 	if category == "" || name == "" || key == "" {
-		return errors.New(`category, name and shortcut key are required to register new shortcut key. Check "speep help" for the usage.`)
+		return errors.New(`category, name and shortcut key are required to register new shortcut key. Check "speep help" for the usage`)
 	}
 	return nil
 }
@@ -201,7 +201,7 @@ func handleAdd(addCmd flag.FlagSet, category string, name string, newShortcut st
 	allShortcuts = append(allShortcuts, shortcut)
 	err = shortcuts.SaveShortcuts(allShortcuts)
 	if err != nil {
-		return fmt.Errorf("failed to save the updated list: %w", err)
+		return fmt.Errorf(`failed to save the updated list`)
 	}
 
 	fmt.Printf(`New shortcut "%v" for %v successfully registered`, name, category)
@@ -212,7 +212,7 @@ func handleDelete(deleteCmd flag.FlagSet, all bool, allShort bool, category stri
 
 	if !all && !allShort {
 		if category == "" && name == "" {
-			return errors.New("category and name are required to delete a shortcut key")
+			return errors.New(`category and name are required to delete a shortcut key`)
 		} else if category == "" || name == "" {
 			fmt.Println("Flag and/or argument for the command delete missing")
 			fmt.Print(handleHelp(usage))
@@ -224,7 +224,7 @@ func handleDelete(deleteCmd flag.FlagSet, all bool, allShort bool, category stri
 		// Delete full shortcut list
 		err := shortcuts.DeleteShortcuts()
 		if err != nil {
-			return fmt.Errorf("failed to delete the shortcut list: %w", err)
+			return fmt.Errorf(`failed to delete the shortcut list`)
 		}
 		fmt.Println("Shortcut list deleted")
 	}
@@ -232,7 +232,7 @@ func handleDelete(deleteCmd flag.FlagSet, all bool, allShort bool, category stri
 	if category != "" && name != "" {
 		err := shortcuts.DeleteShortcut(category, name)
 		if err != nil {
-			return fmt.Errorf("failed to remove an item from the list: %w", err)
+			return fmt.Errorf(`failed to remove an item from the list`)
 		}
 		fmt.Printf("Shortcut %v for %v successfully removed from the Shortcut key list", name, category)
 		// Add return error of the target not exist if the name doesn't exist in the list
